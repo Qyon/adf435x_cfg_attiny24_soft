@@ -30,18 +30,17 @@ static const adfRegisters freq_2 = {
 };
 
 ISR(WDT_vect) {
-
+    WDTCSR |= _BV(WDIE);
 }
 
 int8_t freqSelector = -1;
 
 void setup() {
     cli();
-    wdt_enable(WDTO_500MS);
-
     MCUSR &= ~_BV(WDRF);
-    WDTCSR |= _BV(WDCE) & ~_BV(WDE);
-    WDTCSR |= _BV(WDIE);
+    WDTCSR |= (_BV(WDCE) | _BV(WDE));   // Enable the WD Change Bit
+    WDTCSR =   _BV(WDIE) |              // Enable WDT Interrupt
+              _BV(WDP2) | _BV(WDP1);   // Set Timeout to ~1 seconds (or something)
     sei();
 
     pinMode(0, INPUT);
@@ -70,7 +69,7 @@ void setupADF(uint8_t cfgToUse) {
         digitalWrite(7, LOW);
         delayMicroseconds(20);
         for (int8_t i = 3; i > -1; i--) {
-            SPI.transfer((*registers[x] >> (i * 8)));
+            SPI.transfer((uint8_t )((*registers)[x] >> (i * 8)));
         }
         digitalWrite(7, HIGH);
         delayMicroseconds(5);
